@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { EventType, Side } from '../types';
 import { sideTeam, uid, withTeam } from '../lib/storage';
-import { ACTION_META, statsBySide } from '../lib/stats';
+import { ACTION_META, statsBySide, teamFoulsInQuarter } from '../lib/stats';
 import { clockText, quarterLabel } from '../lib/format';
 import { useGame } from '../lib/useGame';
 
@@ -17,6 +17,7 @@ export default function Live() {
   const [running, setRunning] = useState(false);
   const [subMode, setSubMode] = useState(false);
   const [toast, setToast] = useState('');
+  const [assistFor, setAssistFor] = useState<{ scorerId: string | null; side: Side } | null>(null);
 
   // タイマー
   useEffect(() => {
@@ -51,8 +52,18 @@ export default function Live() {
   const awayScore = game.events.filter((e) => e.side === 'away').reduce((s, e) => s + ACTION_META[e.type].points, 0);
   const selected = playerId ? team.players.find((p) => p.id === playerId) ?? null : null;
   const recent = game.events.slice(-8).reverse();
+  const homeFouls = teamFoulsInQuarter(game.events, 'home', game.quarter);
+  const awayFouls = teamFoulsInQuarter(game.events, 'away', game.quarter);
 
-  function record(type: EventType) {
+  /** アシスト候補：コート上の選手がいればその5人、いなければ全員（得点者は除く） */
+  const assistCandidates = (() => {
+    if (!assistFor) return [];
+    const list = sideTeam(game, assistFor.side).players.filter((p) => p.id !== assistFor.scorerId);
+    const onCourt = list.filter((p) => p.onCourt);
+    return onCourt.length > 0 ? onCourt : list;
+  })();
+
+  function addEvent(type: EventType, targetSide: Side, targetPlayerId: string | null) {
     update((g) => ({
       ...g,
       events: [...g.events, {
@@ -60,17 +71,33 @@ export default function Live() {
         ts: Date.now(),
         quarter: g.quarter,
         clock: g.clock,
-        side,
-        playerId,
+        side: targetSide,
+        playerId: targetPlayerId,
         type,
       }],
     }));
+  }
+
+  function record(type: EventType) {
+    addEvent(type, side, playerId);
     const who = selected ? `#${selected.number} ${selected.name}` : 'チーム';
     setToast(`${who} : ${ACTION_META[type].label}`);
+    // シュート成功のあとはアシストを1タップで足せるようにする
+    const isMadeFG = type === 'FG2M' || type === 'FG3M';
+    setAssistFor(isMadeFG && team.players.length > 1 ? { scorerId: playerId, side } : null);
+  }
+
+  function recordAssist(pid: string) {
+    if (!assistFor) return;
+    const p = assistCandidates.find((x) => x.id === pid);
+    addEvent('AST', assistFor.side, pid);
+    setAssistFor(null);
+    setToast(p ? `アシスト: #${p.number} ${p.name}` : 'アシストを記録しました');
   }
 
   function undoLast() {
     update((g) => (g.events.length === 0 ? g : { ...g, events: g.events.slice(0, -1) }));
+    setAssistFor(null);
     setToast('直前のプレーを取り消しました');
   }
 
@@ -95,11 +122,13 @@ export default function Live() {
 
   function nextQuarter() {
     setRunning(false);
+    setAssistFor(null);
     update((g) => ({ ...g, quarter: g.quarter + 1, clock: g.quarterMinutes * 60 }));
   }
 
   function prevQuarter() {
     setRunning(false);
+    setAssistFor(null);
     update((g) => (g.quarter <= 1 ? g : { ...g, quarter: g.quarter - 1, clock: 0 }));
   }
 
@@ -129,6 +158,9 @@ export default function Live() {
         >
           <span className="sb-name">{game.home.name}</span>
           <span className="sb-score">{homeScore}</span>
+          <span className={`sb-fouls ${homeFouls >= 4 ? 'bonus' : ''}`}>
+            Q内ファウル {homeFouls}{homeFouls >= 4 ? '・ボーナス' : ''}
+          </span>
         </button>
 
         <div className="sb-center">
@@ -152,6 +184,9 @@ export default function Live() {
         >
           <span className="sb-name">{game.away.name}</span>
           <span className="sb-score">{awayScore}</span>
+          <span className={`sb-fouls ${awayFouls >= 4 ? 'bonus' : ''}`}>
+            Q内ファウル {awayFouls}{awayFouls >= 4 ? '・ボーナス' : ''}
+          </span>
         </button>
       </section>
 
@@ -198,6 +233,20 @@ export default function Live() {
           </p>
         )}
       </section>
+
+      {assistFor && assistCandidates.length > 0 && (
+        <section className="assist-bar">
+          <span className="assist-label">アシストは？</span>
+          <div className="assist-choices">
+            {assistCandidates.map((p) => (
+              <button key={p.id} className="btn tiny" onClick={() => recordAssist(p.id)}>
+                #{p.number || '—'} {p.name || '(名前未設定)'}
+              </button>
+            ))}
+            <button className="btn tiny" onClick={() => setAssistFor(null)}>なし</button>
+          </div>
+        </section>
+      )}
 
       <section className="actions">
         <div className="action-target">

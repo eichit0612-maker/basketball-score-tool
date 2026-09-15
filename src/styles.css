@@ -326,3 +326,17 @@ select.input {
 
 .backup { margin-top: 18px; }
 .hint.message { color: var(--accent); }
+
+/* ---------- team fouls / assist ---------- */
+.sb-fouls { font-size: 11px; color: var(--muted); }
+.sb-fouls.bonus { color: #ffd08a; font-weight: 700; }
+
+.assist-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--surface); border: 2px solid var(--accent); border-radius: var(--radius);
+  padding: 10px 12px; margin-top: 12px;
+}
+.assist-label { font-size: 13px; font-weight: 700; color: var(--accent); }
+.assist-choices { display: flex; gap: 6px; flex-wrap: wrap; }
+.q-table .foul-row td { color: var(--muted); font-size: 12px; }
+.q-table .foul-row td.over { color: #ffd08a; font-weight: 700; }

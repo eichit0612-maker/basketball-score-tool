@@ -104,7 +104,28 @@ export function scoreByQuarter(game: Game, side: Side): number[] {
   return arr;
 }
 
+/** クォーター別のチームファウル数 */
+export function foulsByQuarter(game: Game, side: Side): number[] {
+  const maxQ = Math.max(
+    game.quarterCount,
+    game.quarter,
+    ...game.events.map((e) => e.quarter),
+  );
+  const arr = new Array<number>(maxQ).fill(0);
+  for (const ev of game.events) {
+    if (ev.side !== side || ev.type !== 'PF') continue;
+    const idx = ev.quarter - 1;
+    if (idx >= 0 && idx < arr.length) arr[idx]++;
+  }
+  return arr;
+}
+
 export function pct(made: number, att: number): string {
   if (att === 0) return '—';
   return `${Math.round((made / att) * 1000) / 10}%`;
+}
+
+/** そのクォーターのチームファウル数（FIBAでは5個目から相手にフリースロー2本） */
+export function teamFoulsInQuarter(events: GameEvent[], side: Side, quarter: number): number {
+  return events.filter((e) => e.side === side && e.type === 'PF' && e.quarter === quarter).length;
 }

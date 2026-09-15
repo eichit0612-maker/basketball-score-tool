@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import type { Side, StatLine } from '../types';
 import { sideTeam } from '../lib/storage';
-import { ACTION_META, EMPTY_STAT, pct, scoreByQuarter, statsBySide, TEAM_KEY, teamTotal } from '../lib/stats';
+import { ACTION_META, EMPTY_STAT, foulsByQuarter, pct, scoreByQuarter, statsBySide, TEAM_KEY, teamTotal } from '../lib/stats';
 import { clockText, quarterLabel } from '../lib/format';
 import { downloadCsv } from '../lib/csv';
 import { useGame } from '../lib/useGame';
@@ -39,6 +39,8 @@ export default function BoxScore() {
 
   const homeQ = scoreByQuarter(game, 'home');
   const awayQ = scoreByQuarter(game, 'away');
+  const homeF = foulsByQuarter(game, 'home');
+  const awayF = foulsByQuarter(game, 'away');
   const homeTotal = teamTotal(game.events, 'home');
   const awayTotal = teamTotal(game.events, 'away');
 
@@ -137,6 +139,16 @@ export default function BoxScore() {
                 <td>{game.away.name}</td>
                 {awayQ.map((v, i) => <td key={i}>{v}</td>)}
                 <td className="strong">{awayTotal.pts}</td>
+              </tr>
+              <tr className="foul-row">
+                <td>{game.home.name}・チームファウル</td>
+                {homeF.map((v, i) => <td key={i} className={v >= 5 ? 'over' : ''}>{v}</td>)}
+                <td>{homeF.reduce((a, b) => a + b, 0)}</td>
+              </tr>
+              <tr className="foul-row">
+                <td>{game.away.name}・チームファウル</td>
+                {awayF.map((v, i) => <td key={i} className={v >= 5 ? 'over' : ''}>{v}</td>)}
+                <td>{awayF.reduce((a, b) => a + b, 0)}</td>
               </tr>
             </tbody>
           </table>
