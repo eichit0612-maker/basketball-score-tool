@@ -5,6 +5,7 @@ import { ACTION_META, EMPTY_STAT, foulsByQuarter, pct, scoreByQuarter, statsBySi
 import { clockText, quarterLabel } from '../lib/format';
 import { downloadCsv } from '../lib/csv';
 import { useGame } from '../lib/useGame';
+import MarginChart from '../components/MarginChart';
 
 const COLUMNS: { key: keyof StatLine | 'fg' | 'fg3' | 'ft'; label: string }[] = [
   { key: 'pts', label: 'PTS' },
@@ -162,6 +163,13 @@ export default function BoxScore() {
           </button>
         )}
       </section>
+
+      {game.events.length > 0 && (
+        <section className="card">
+          <h3 className="box-title">得点差の推移</h3>
+          <MarginChart game={game} />
+        </section>
+      )}
 
       {renderTable('home')}
       {renderTable('away')}
