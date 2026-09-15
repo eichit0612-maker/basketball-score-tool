@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Game, Side } from '../types';
 import { newPlayer, sideTeam, withTeam } from '../lib/storage';
+import { loadRosters, rosterToPlayers, saveRoster } from '../lib/rosters';
 import { useGame } from '../lib/useGame';
 
 export default function Setup() {
@@ -10,6 +11,8 @@ export default function Setup() {
   const nav = useNavigate();
   const [bulkSide, setBulkSide] = useState<Side | null>(null);
   const [bulkText, setBulkText] = useState('');
+  const [rosters, setRosters] = useState(() => loadRosters());
+  const [rosterMsg, setRosterMsg] = useState('');
 
   if (!loaded) return <div className="page"><p className="empty">読み込み中…</p></div>;
   if (!game) return <div className="page"><p className="empty">試合が見つかりません。<Link to="/">一覧へ</Link></p></div>;
@@ -54,6 +57,22 @@ export default function Setup() {
     });
   }
 
+  function applyRoster(side: Side, rosterId: string) {
+    const roster = rosters.find((r) => r.id === rosterId);
+    if (!roster) return;
+    const current = sideTeam(game!, side);
+    if (current.players.length > 0 && !confirm(`「${roster.name}」の名簿（${roster.players.length}人）で置き換えます。よろしいですか？`)) return;
+    patch((g) => withTeam(g, side, { name: roster.name, players: rosterToPlayers(roster) }));
+    setRosterMsg(`「${roster.name}」を読み込みました。`);
+  }
+
+  function storeRoster(side: Side) {
+    const team = sideTeam(game!, side);
+    saveRoster(team);
+    setRosters(loadRosters());
+    setRosterMsg(`「${team.name}」の名簿を保存しました。次の試合から読み込めます。`);
+  }
+
   function applyBulk(side: Side) {
     const lines = bulkText.split('\n').map((l) => l.trim()).filter(Boolean);
     if (lines.length === 0) { setBulkSide(null); return; }
@@ -91,6 +110,22 @@ export default function Setup() {
             placeholder="チーム名"
             onChange={(e) => patch((g) => withTeam(g, side, { ...sideTeam(g, side), name: e.target.value }))}
           />
+        </div>
+
+        <div className="roster-io">
+          <select
+            className="input"
+            value=""
+            onChange={(e) => applyRoster(side, e.target.value)}
+          >
+            <option value="">保存済みの名簿から読み込む…</option>
+            {rosters.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}（{r.players.length}人）</option>
+            ))}
+          </select>
+          <button className="btn" onClick={() => storeRoster(side)} disabled={team.players.length === 0}>
+            この名簿を保存
+          </button>
         </div>
 
         <div className="roster-head">
@@ -210,6 +245,8 @@ export default function Setup() {
 
       {renderTeam('home')}
       {renderTeam('away')}
+
+      {rosterMsg && <p className="hint message">{rosterMsg}</p>}
 
       <p className="note">相手チームの選手を登録しない場合も、「チーム」としてまとめて記録できます。</p>
 

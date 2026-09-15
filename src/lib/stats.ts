@@ -52,6 +52,13 @@ function apply(stat: StatLine, type: EventType): void {
 /** 選手ID -> スタットライン（チーム記録は '__team__' に集約） */
 export const TEAM_KEY = '__team__';
 
+/** 2つのスタットラインを足し合わせる（集計用） */
+export function addStat(target: StatLine, src: StatLine): void {
+  for (const k of Object.keys(target) as (keyof StatLine)[]) {
+    target[k] += src[k];
+  }
+}
+
 export function statsBySide(events: GameEvent[], side: Side): Map<string, StatLine> {
   const map = new Map<string, StatLine>();
   for (const ev of events) {

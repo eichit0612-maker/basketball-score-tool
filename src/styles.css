@@ -291,3 +291,38 @@ body {
   .box-table th, .q-table th, .row-num, .pcts, .final-meta, .team-row td { color: #444; }
   .sb-score, .num { color: #000; }
 }
+
+/* ---------- season / roster / backup ---------- */
+select.input {
+  appearance: none;
+  padding-right: 28px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+                    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.roster-io { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.roster-io .input { flex: 1 1 200px; }
+
+.season-controls { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
+.season-controls .field { flex: 1 1 180px; }
+.mode-switch { display: flex; gap: 6px; }
+
+.row-team { color: var(--muted); font-size: 11px; margin-left: 6px; }
+.plus { color: #8fd6a8; }
+.minus { color: #ff9d97; }
+
+.trend { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.trend li {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 10px; font-size: 13px;
+}
+.trend .result { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
+.trend .result.win { color: #8fd6a8; }
+.trend .result.lose { color: #ff9d97; }
+
+.backup { margin-top: 18px; }
+.hint.message { color: var(--accent); }

@@ -11,3 +11,10 @@ createRoot(document.getElementById('root')!).render(
     </HashRouter>
   </React.StrictMode>,
 );
+
+// オフライン対応（本番ビルドのみ）
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW登録に失敗しました', e));
+  });
+}

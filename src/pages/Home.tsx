@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { Game } from '../types';
 import { deleteGame, loadGames, newGame, upsertGame } from '../lib/storage';
 import { score } from '../lib/stats';
+import { exportBackup, importBackup } from '../lib/backup';
 
 export default function Home() {
   const [games, setGames] = useState<Game[]>([]);
+  const [message, setMessage] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
   const nav = useNavigate();
 
   useEffect(() => setGames(loadGames()), []);
@@ -22,10 +25,22 @@ export default function Home() {
     setGames(loadGames());
   }
 
+  async function onImport(file: File) {
+    try {
+      const r = importBackup(await file.text());
+      setGames(loadGames());
+      setMessage(`復元しました：試合 ${r.addedGames}件を追加 / ${r.updatedGames}件を更新、名簿 ${r.addedRosters}件を追加`);
+    } catch (e) {
+      setMessage(e instanceof Error ? `復元できませんでした：${e.message}` : '復元できませんでした。');
+    }
+    if (fileRef.current) fileRef.current.value = '';
+  }
+
   return (
     <div className="page">
       <header className="app-header">
         <h1>🏀 バスケ スコア記録</h1>
+        <Link className="btn tiny" to="/season">シーズン集計</Link>
       </header>
 
       <button className="btn primary big" onClick={create}>＋ 新しい試合をはじめる</button>
@@ -68,7 +83,28 @@ export default function Home() {
         })}
       </ul>
 
-      <p className="note">データはこのブラウザ内（localStorage）に保存されます。</p>
+      <section className="card backup">
+        <h3 className="box-title">バックアップ</h3>
+        <p className="hint">
+          データはこのブラウザ内（localStorage）だけに保存されます。
+          機種変更やブラウザのデータ削除に備えて、ときどき書き出しておいてください。
+        </p>
+        <div className="row gap">
+          <button className="btn" onClick={exportBackup} disabled={games.length === 0}>ファイルに書き出す</button>
+          <button className="btn" onClick={() => fileRef.current?.click()}>ファイルから復元</button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            hidden
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void onImport(f);
+            }}
+          />
+        </div>
+        {message && <p className="hint message">{message}</p>}
+      </section>
     </div>
   );
 }
