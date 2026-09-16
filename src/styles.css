@@ -344,20 +344,6 @@ select.input {
 .q-table .foul-row td { color: var(--muted); font-size: 12px; }
 .q-table .foul-row td.over { color: #ffd08a; font-weight: 700; }
 
-/* ---------- margin chart ---------- */
-.margin-chart svg { width: 100%; height: auto; display: block; }
-.mc-grid { stroke: var(--line); stroke-width: 1; }
-.mc-zero { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
-.mc-area { stroke: none; }
-.mc-area.home { fill: rgba(47, 111, 237, .35); }
-.mc-area.away { fill: rgba(107, 75, 214, .35); }
-.mc-line { fill: none; stroke: var(--text); stroke-width: 2; stroke-linejoin: round; }
-.mc-label { fill: var(--muted); font-size: 11px; }
-.mc-legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 8px 0 0; }
-.mc-legend .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
-.mc-legend .dot.home { background: rgba(47, 111, 237, .8); }
-.mc-legend .dot.away { background: rgba(107, 75, 214, .8); margin-left: 10px; }
-
 /* ---------- quarter bar (タイマー廃止後) ---------- */
 .scoreboard.compact { grid-template-columns: 1fr 1fr; }
 .quarter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
