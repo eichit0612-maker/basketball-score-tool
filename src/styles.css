@@ -385,3 +385,88 @@ select.input {
 .sc-legend .dot { width: 9px; height: 9px; border-radius: 1px; display: inline-block; }
 .sc-legend .dot.home { background: var(--accent-2); }
 .sc-legend .dot.away { background: var(--away); margin-left: 12px; }
+
+/* =========================================================
+   表示パターン
+   既定（data-ui="dark"）は上の :root の値をそのまま使う。
+   ========================================================= */
+
+/* --- スコアシート：紙の記録用紙に近い白地 --- */
+:root[data-ui="sheet"] {
+  color-scheme: light;
+  --bg: #f3f1ec;
+  --surface: #ffffff;
+  --surface-2: #eae7e0;
+  --line: #c6c1b6;
+  --text: #1b1916;
+  --muted: #6a645b;
+  --accent: #9c4f19;
+  --accent-2: #2c5c86;
+  --away: #57508a;
+  --made: #e2ece4;
+  --miss: #f2e2e0;
+  --danger: #9c332b;
+}
+:root[data-ui="sheet"] .btn.action.made {
+  color: #16452c; border-color: #8fba9f; font-weight: 700;
+}
+:root[data-ui="sheet"] .btn.action.miss {
+  color: #7a2a23; border-color: #d3a49e; font-weight: 700;
+}
+:root[data-ui="sheet"] .btn.danger { color: var(--danger); border-color: #d8b4b0; }
+:root[data-ui="sheet"] .toast { background: #2a2520; color: #fff; }
+:root[data-ui="sheet"] .box-table thead th { border-bottom: 2px solid var(--text); }
+:root[data-ui="sheet"] .total-row td { border-top: 2px solid var(--text); }
+:root[data-ui="sheet"] .player-card.on-court { border-color: #8fa4bd; }
+:root[data-ui="sheet"] .sb-score { color: var(--text); }
+:root[data-ui="sheet"] .tag.status-live { color: #8a5a10; border-color: #d8c08a; }
+:root[data-ui="sheet"] .tag.status-finished { color: #2f6b46; border-color: #a9cbb6; }
+:root[data-ui="sheet"] .sb-fouls.bonus { color: #9c4f19; }
+:root[data-ui="sheet"] .q-table .foul-row td.over { color: #9c4f19; }
+:root[data-ui="sheet"] .foul-out, :root[data-ui="sheet"] .minus, :root[data-ui="sheet"] .trend .result.lose { color: #9c332b; }
+:root[data-ui="sheet"] .plus, :root[data-ui="sheet"] .trend .result.win { color: #2f6b46; }
+
+/* --- 大きい文字：文字と罫線を太く、ほぼモノクロ --- */
+:root[data-ui="contrast"] {
+  --bg: #000000;
+  --surface: #0e0e0e;
+  --surface-2: #1c1c1c;
+  --line: #565656;
+  --text: #ffffff;
+  --muted: #bdbdbd;
+  --accent: #ffb000;
+  --accent-2: #4da3ff;
+  --away: #b08cff;
+  --made: #1c6b36;
+  --miss: #9c2b22;
+  --danger: #ff6b60;
+}
+:root[data-ui="contrast"] body { font-size: 16px; }
+:root[data-ui="contrast"] .btn { font-size: 16px; border-width: 2px; }
+:root[data-ui="contrast"] .btn.tiny { font-size: 14px; }
+:root[data-ui="contrast"] .btn.action { padding: 20px 8px; font-size: 16px; font-weight: 700; }
+:root[data-ui="contrast"] .btn.quarter { font-size: 18px; padding: 14px 8px; }
+:root[data-ui="contrast"] .player-card { border-width: 2px; min-height: 86px; }
+:root[data-ui="contrast"] .player-card .p-num { font-size: 21px; }
+:root[data-ui="contrast"] .player-card .p-name { font-size: 15px; }
+:root[data-ui="contrast"] .player-card .p-sub { font-size: 13px; }
+:root[data-ui="contrast"] .sb-score { font-size: 46px; }
+:root[data-ui="contrast"] .sb-name { font-size: 15px; }
+:root[data-ui="contrast"] .sb-fouls { font-size: 13px; }
+:root[data-ui="contrast"] .box-table, :root[data-ui="contrast"] .q-table { font-size: 15px; }
+:root[data-ui="contrast"] .box-table th, :root[data-ui="contrast"] .q-table th { font-size: 13px; color: var(--text); }
+:root[data-ui="contrast"] .box-table th, :root[data-ui="contrast"] .box-table td,
+:root[data-ui="contrast"] .q-table th, :root[data-ui="contrast"] .q-table td { padding: 9px 10px; }
+:root[data-ui="contrast"] .card { border-width: 2px; }
+:root[data-ui="contrast"] .rec-hint, :root[data-ui="contrast"] .hint { font-size: 14px; }
+
+/* --- 表示パターンの選択 --- */
+.ui-picker { display: grid; gap: 8px; }
+.ui-option {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius);
+  color: var(--text); padding: 10px 12px; cursor: pointer; font-family: inherit; text-align: left;
+}
+.ui-option.on { border-color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+.ui-option .ui-name { font-weight: 700; font-size: 14px; }
+.ui-option .ui-note { font-size: 12px; color: var(--muted); }

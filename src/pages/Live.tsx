@@ -164,7 +164,7 @@ export default function Live() {
             onClick={() => { if (!subMode) setPlayerId(null); }}
           >
             <span className="p-name">チーム</span>
-            <span className="p-sub">選手を指定しない</span>
+            <span className="p-sub">指定なし</span>
           </button>
           {players.map((p) => {
             const s = statMap.get(p.id);
