@@ -3,7 +3,7 @@ import type { Side, StatLine } from '../types';
 import { sideTeam } from '../lib/storage';
 import {
   ACTION_META, EMPTY_STAT, foulsByQuarter, pct, scoreByQuarter,
-  statColumns, statsBySide, TEAM_KEY, teamTotal, type StatColumnKey,
+  STAT_COLUMNS, statsBySide, TEAM_KEY, teamTotal, type StatColumnKey,
 } from '../lib/stats';
 import { quarterLabel } from '../lib/format';
 import { downloadCsv } from '../lib/csv';
@@ -33,7 +33,7 @@ export default function BoxScore() {
   const awayF = foulsByQuarter(game, 'away');
   const homeTotal = teamTotal(game.events, 'home');
   const awayTotal = teamTotal(game.events, 'away');
-  const columns = statColumns(game.events);
+  const columns = STAT_COLUMNS;
 
   function renderTable(side: Side) {
     const team = sideTeam(game!, side);

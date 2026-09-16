@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Game, StatLine } from '../types';
 import { loadGames } from '../lib/storage';
-import { pct, statColumns, type StatColumnKey } from '../lib/stats';
+import { pct, STAT_COLUMNS, type StatColumnKey } from '../lib/stats';
 import { playedGames, playerSeason, scoreTrend, teamNames, teamSeason } from '../lib/season';
 
 type Mode = 'total' | 'avg';
@@ -31,7 +31,7 @@ export default function Season() {
   const players = useMemo(() => playerSeason(games, team || undefined), [games, team]);
   const trend = useMemo(() => (team ? scoreTrend(games, team) : []), [games, team]);
   const played = useMemo(() => playedGames(games), [games]);
-  const columns = useMemo(() => statColumns(played.flatMap((g) => g.events)), [played]);
+  const columns = STAT_COLUMNS;
 
   return (
     <div className="page">

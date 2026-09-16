@@ -7,10 +7,7 @@ function esc(v: string | number): string {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-const HEADER = [
-  '#', '選手', 'PTS', '2P成', '2P試', '3P成', '3P試', 'FT成', 'FT試',
-  'OR', 'DR', 'REB', 'AST', 'STL', 'BLK', 'TO', 'F',
-];
+const HEADER = ['#', '選手', 'PTS', '2P成', '2P試', '3P成', '3P試', 'FT成', 'FT試', 'F'];
 
 function teamRows(game: Game, side: Side): string[] {
   const team = sideTeam(game, side);
@@ -23,23 +20,20 @@ function teamRows(game: Game, side: Side): string[] {
     rows.push([
       p.number, p.name,
       s?.pts ?? 0, s?.fg2m ?? 0, s?.fg2a ?? 0, s?.fg3m ?? 0, s?.fg3a ?? 0,
-      s?.ftm ?? 0, s?.fta ?? 0, s?.oreb ?? 0, s?.dreb ?? 0, s?.reb ?? 0,
-      s?.ast ?? 0, s?.stl ?? 0, s?.blk ?? 0, s?.tov ?? 0, s?.pf ?? 0,
+      s?.ftm ?? 0, s?.fta ?? 0, s?.pf ?? 0,
     ].map(esc).join(','));
   }
   const tm = map.get(TEAM_KEY);
   if (tm) {
     rows.push([
       '', 'チーム記録',
-      tm.pts, tm.fg2m, tm.fg2a, tm.fg3m, tm.fg3a, tm.ftm, tm.fta,
-      tm.oreb, tm.dreb, tm.reb, tm.ast, tm.stl, tm.blk, tm.tov, tm.pf,
+      tm.pts, tm.fg2m, tm.fg2a, tm.fg3m, tm.fg3a, tm.ftm, tm.fta, tm.pf,
     ].map(esc).join(','));
   }
   const t = teamTotal(game.events, side);
   rows.push([
     '', '合計',
-    t.pts, t.fg2m, t.fg2a, t.fg3m, t.fg3a, t.ftm, t.fta,
-    t.oreb, t.dreb, t.reb, t.ast, t.stl, t.blk, t.tov, t.pf,
+    t.pts, t.fg2m, t.fg2a, t.fg3m, t.fg3a, t.ftm, t.fta, t.pf,
   ].map(esc).join(','));
   rows.push(esc(`FG% ${pct(t.fg2m + t.fg3m, t.fg2a + t.fg3a)} / 3P% ${pct(t.fg3m, t.fg3a)} / FT% ${pct(t.ftm, t.fta)}`));
   return rows;
