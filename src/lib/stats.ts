@@ -130,7 +130,7 @@ export function teamFoulsInQuarter(events: GameEvent[], side: Side, quarter: num
   return events.filter((e) => e.side === side && e.type === 'PF' && e.quarter === quarter).length;
 }
 
-export type StatColumnKey = keyof StatLine | 'fg' | 'fg3' | 'ft';
+export type StatColumnKey = keyof StatLine | 'fg' | 'fg3' | 'ft' | 'fgp' | 'fg3p' | 'ftp';
 export interface StatColumn { key: StatColumnKey; label: string }
 
 /**
@@ -140,7 +140,10 @@ export interface StatColumn { key: StatColumnKey; label: string }
 export const STAT_COLUMNS: StatColumn[] = [
   { key: 'pts', label: 'PTS' },
   { key: 'fg', label: 'FG' },
+  { key: 'fgp', label: 'FG%' },
   { key: 'fg3', label: '3P' },
+  { key: 'fg3p', label: '3P%' },
   { key: 'ft', label: 'FT' },
+  { key: 'ftp', label: 'FT%' },
   { key: 'pf', label: 'F' },
 ];

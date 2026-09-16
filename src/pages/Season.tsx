@@ -13,8 +13,12 @@ function cell(stat: StatLine, key: StatColumnKey, gp: number, mode: Mode): strin
   const fmt = (n: number) => (mode === 'avg' ? (n / div).toFixed(1) : String(n));
   switch (key) {
     case 'fg': return `${fmt(stat.fg2m + stat.fg3m)}/${fmt(stat.fg2a + stat.fg3a)}`;
+    // 成功率は平均表示でも割合そのまま
+    case 'fgp': return pct(stat.fg2m + stat.fg3m, stat.fg2a + stat.fg3a);
     case 'fg3': return `${fmt(stat.fg3m)}/${fmt(stat.fg3a)}`;
+    case 'fg3p': return pct(stat.fg3m, stat.fg3a);
     case 'ft': return `${fmt(stat.ftm)}/${fmt(stat.fta)}`;
+    case 'ftp': return pct(stat.ftm, stat.fta);
     default: return fmt(stat[key]);
   }
 }
@@ -99,7 +103,6 @@ export default function Season() {
                     <th className="sticky-col">選手</th>
                     <th>試合</th>
                     {columns.map((c) => <th key={c.key}>{c.label}</th>)}
-                    <th>FG%</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -111,11 +114,10 @@ export default function Season() {
                       </td>
                       <td>{p.gp}</td>
                       {columns.map((c) => <td key={c.key}>{cell(p.total, c.key, p.gp, mode)}</td>)}
-                      <td>{pct(p.total.fg2m + p.total.fg3m, p.total.fg2a + p.total.fg3a)}</td>
                     </tr>
                   ))}
                   {players.length === 0 && (
-                    <tr><td className="sticky-col" colSpan={columns.length + 3}>記録がありません。</td></tr>
+                    <tr><td className="sticky-col" colSpan={columns.length + 2}>記録がありません。</td></tr>
                   )}
                 </tbody>
               </table>

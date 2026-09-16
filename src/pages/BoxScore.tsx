@@ -14,8 +14,11 @@ import ScoreChart from '../components/ScoreChart';
 function cell(stat: StatLine, key: StatColumnKey): string {
   switch (key) {
     case 'fg': return `${stat.fg2m + stat.fg3m}/${stat.fg2a + stat.fg3a}`;
+    case 'fgp': return pct(stat.fg2m + stat.fg3m, stat.fg2a + stat.fg3a);
     case 'fg3': return `${stat.fg3m}/${stat.fg3a}`;
+    case 'fg3p': return pct(stat.fg3m, stat.fg3a);
     case 'ft': return `${stat.ftm}/${stat.fta}`;
+    case 'ftp': return pct(stat.ftm, stat.fta);
     default: return String(stat[key]);
   }
 }
@@ -82,11 +85,6 @@ export default function BoxScore() {
             </tbody>
           </table>
         </div>
-        <p className="pcts">
-          FG {pct(total.fg2m + total.fg3m, total.fg2a + total.fg3a)} ／
-          3P {pct(total.fg3m, total.fg3a)} ／
-          FT {pct(total.ftm, total.fta)}
-        </p>
       </section>
     );
   }

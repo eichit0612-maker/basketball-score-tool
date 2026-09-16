@@ -149,9 +149,7 @@ export default function Live() {
         <button className="btn tiny" onClick={addOvertime}>＋OT</button>
       </section>
 
-      <p className="rec-hint">
-        記録中: <strong>{team.name}</strong>（チーム名をタップで切替）→ 選手を選んでプレーをタップ
-      </p>
+      <p className="rec-hint">記録中 <strong>{team.name}</strong></p>
 
       <section className="players">
         <div className="players-head">
@@ -166,7 +164,7 @@ export default function Live() {
             onClick={() => { if (!subMode) setPlayerId(null); }}
           >
             <span className="p-name">チーム</span>
-            <span className="p-sub">選手を特定しない記録</span>
+            <span className="p-sub">選手を指定しない</span>
           </button>
           {players.map((p) => {
             const s = statMap.get(p.id);

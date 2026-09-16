@@ -126,7 +126,7 @@ export default function Setup() {
 
         <div className="roster-head">
           <span>選手 {team.players.length}人 / 出場中 {onCourtCount}人</span>
-          <span className="hint">「出」= コート上（記録画面で上に並びます）</span>
+          <span className="hint">「出」＝コート上</span>
         </div>
 
         <ul className="roster">
@@ -230,7 +230,7 @@ export default function Setup() {
 
       {rosterMsg && <p className="hint message">{rosterMsg}</p>}
 
-      <p className="note">相手チームの選手を登録しない場合も、「チーム」としてまとめて記録できます。</p>
+      <p className="note">相手チームは選手を登録せず、「チーム」としてまとめて記録することもできます。</p>
 
       <div className="sticky-bottom">
         <button className="btn primary big" onClick={start}>

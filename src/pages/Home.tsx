@@ -39,7 +39,7 @@ export default function Home() {
   return (
     <div className="page">
       <header className="app-header">
-        <h1>🏀 バスケ スコア記録</h1>
+        <h1>バスケ スコア記録</h1>
         <Link className="btn tiny" to="/season">シーズン集計</Link>
       </header>
 
@@ -86,8 +86,7 @@ export default function Home() {
       <section className="card backup">
         <h3 className="box-title">バックアップ</h3>
         <p className="hint">
-          データはこのブラウザ内（localStorage）だけに保存されます。
-          機種変更やブラウザのデータ削除に備えて、ときどき書き出しておいてください。
+          データはこのブラウザ内にだけ保存されます。機種変更やデータ削除に備えて、ときどき書き出してください。
         </p>
         <div className="row gap">
           <button className="btn" onClick={exportBackup} disabled={games.length === 0}>ファイルに書き出す</button>
