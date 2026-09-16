@@ -4,12 +4,10 @@ import type { Game } from '../types';
 import { deleteGame, loadGames, newGame, upsertGame } from '../lib/storage';
 import { score } from '../lib/stats';
 import { exportBackup, importBackup } from '../lib/backup';
-import { applyTheme, loadTheme, UI_THEMES, type UiTheme } from '../lib/theme';
 
 export default function Home() {
   const [games, setGames] = useState<Game[]>([]);
   const [message, setMessage] = useState('');
-  const [theme, setTheme] = useState<UiTheme>(() => loadTheme());
   const fileRef = useRef<HTMLInputElement>(null);
   const nav = useNavigate();
 
@@ -84,22 +82,6 @@ export default function Home() {
           );
         })}
       </ul>
-
-      <section className="card">
-        <h3 className="box-title">表示</h3>
-        <div className="ui-picker">
-          {UI_THEMES.map((t) => (
-            <button
-              key={t.id}
-              className={`ui-option ${theme === t.id ? 'on' : ''}`}
-              onClick={() => { applyTheme(t.id); setTheme(t.id); }}
-            >
-              <span className="ui-name">{t.label}</span>
-              <span className="ui-note">{t.note}</span>
-            </button>
-          ))}
-        </div>
-      </section>
 
       <section className="card backup">
         <h3 className="box-title">バックアップ</h3>
