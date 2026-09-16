@@ -33,7 +33,9 @@ export default function Live() {
   if (!game) return <div className="page"><p className="empty">試合が見つかりません。<Link to="/">一覧へ</Link></p></div>;
 
   const team = sideTeam(game, side);
-  const players = [...team.players].sort((a, b) => Number(b.onCourt) - Number(a.onCourt));
+  const players = [...team.players].sort(
+    (a, b) => Number(b.starter) - Number(a.starter) || Number(b.played) - Number(a.played),
+  );
   const homeScore = game.events.filter((e) => e.side === 'home').reduce((s, e) => s + ACTION_META[e.type].points, 0);
   const awayScore = game.events.filter((e) => e.side === 'away').reduce((s, e) => s + ACTION_META[e.type].points, 0);
   const selected = playerId ? team.players.find((p) => p.id === playerId) ?? null : null;
@@ -78,11 +80,12 @@ export default function Live() {
 
   function selectPlayer(pid: string) {
     if (subMode) {
+      // 出場モード: コートに出たらON。ベンチに下がってもOFFにしない（誤操作の取り消し用にOFFも可）
       update((g) => {
         const t = sideTeam(g, side);
         return withTeam(g, side, {
           ...t,
-          players: t.players.map((p) => (p.id === pid ? { ...p, onCourt: !p.onCourt } : p)),
+          players: t.players.map((p) => (p.id === pid ? { ...p, played: !p.played } : p)),
         });
       });
       return;
@@ -156,7 +159,7 @@ export default function Live() {
         <div className="players-head">
           <span>選手</span>
           <button className={`btn tiny toggle ${subMode ? 'on' : ''}`} onClick={() => setSubMode((s) => !s)}>
-            {subMode ? '交代モード中（タップで出場切替）' : '交代モード'}
+            {subMode ? '出場モード中（タップで出場/未出場）' : '出場を記録'}
           </button>
         </div>
         <div className="player-grid">
@@ -172,10 +175,13 @@ export default function Live() {
             return (
               <button
                 key={p.id}
-                className={`player-card ${playerId === p.id ? 'selected' : ''} ${p.onCourt ? 'on-court' : ''}`}
+                className={`player-card ${playerId === p.id ? 'selected' : ''} ${p.played ? 'played' : 'bench'}`}
                 onClick={() => selectPlayer(p.id)}
               >
-                <span className="p-num">#{p.number || '—'}</span>
+                <span className="p-num">
+                  #{p.number || '—'}
+                  {p.starter && <span className="p-badge">先発</span>}
+                </span>
                 <span className="p-name">{p.name || '(名前未設定)'}</span>
                 <span className="p-sub">
                   {s?.pts ?? 0}点 / F{s?.pf ?? 0}

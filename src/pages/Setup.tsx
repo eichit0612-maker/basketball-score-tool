@@ -40,12 +40,17 @@ export default function Setup() {
     });
   }
 
-  function toggleOnCourt(side: Side, pid: string) {
+  /** 先発を切り替える。先発にした選手は「出場した」扱いにする */
+  function toggleStarter(side: Side, pid: string) {
     patch((g) => {
       const team = sideTeam(g, side);
       return withTeam(g, side, {
         ...team,
-        players: team.players.map((p) => (p.id === pid ? { ...p, onCourt: !p.onCourt } : p)),
+        players: team.players.map((p) => {
+          if (p.id !== pid) return p;
+          const starter = !p.starter;
+          return { ...p, starter, played: starter ? true : p.played };
+        }),
       });
     });
   }
@@ -95,7 +100,7 @@ export default function Setup() {
 
   function renderTeam(side: Side) {
     const team = sideTeam(game!, side);
-    const onCourtCount = team.players.filter((p) => p.onCourt).length;
+    const starterCount = team.players.filter((p) => p.starter).length;
     return (
       <section className="card" key={side}>
         <div className="team-head">
@@ -125,19 +130,22 @@ export default function Setup() {
         </div>
 
         <div className="roster-head">
-          <span>選手 {team.players.length}人 / 出場中 {onCourtCount}人</span>
-          <span className="hint">「出」＝コート上</span>
+          <span>
+            選手 {team.players.length}人 / 先発 {starterCount}人
+            {starterCount > 5 && <span className="warn">（5人を超えています）</span>}
+          </span>
+          <span className="hint">「先」＝スタメン</span>
         </div>
 
         <ul className="roster">
           {team.players.map((p) => (
             <li key={p.id} className="roster-row">
               <button
-                className={`btn tiny toggle ${p.onCourt ? 'on' : ''}`}
-                onClick={() => toggleOnCourt(side, p.id)}
-                title="コート上かどうか"
+                className={`btn tiny toggle ${p.starter ? 'on' : ''}`}
+                onClick={() => toggleStarter(side, p.id)}
+                title="スタメンかどうか"
               >
-                出
+                先
               </button>
               <input
                 className="input num-input"

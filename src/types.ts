@@ -12,7 +12,10 @@ export interface Player {
   id: string;
   number: string;
   name: string;
-  onCourt: boolean;
+  /** 先発出場 */
+  starter: boolean;
+  /** 出場した（途中出場を含む。ベンチに下がっても戻さない） */
+  played: boolean;
 }
 
 export interface Team {

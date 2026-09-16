@@ -43,7 +43,12 @@ export default function BoxScore() {
     const map = statsBySide(game!.events, side);
     const total = side === 'home' ? homeTotal : awayTotal;
     const teamOnly = map.get(TEAM_KEY);
-    const rows = [...team.players].sort((a, b) => (map.get(b.id)?.pts ?? 0) - (map.get(a.id)?.pts ?? 0));
+    // 出場した選手を得点順に、未出場は背番号順で最後にまとめる
+    const rows = [...team.players].sort((a, b) => {
+      if (a.played !== b.played) return Number(b.played) - Number(a.played);
+      if (!a.played) return (Number(a.number) || 999) - (Number(b.number) || 999);
+      return (map.get(b.id)?.pts ?? 0) - (map.get(a.id)?.pts ?? 0);
+    });
 
     return (
       <section className="card" key={side}>
@@ -64,9 +69,11 @@ export default function BoxScore() {
               {rows.map((p) => {
                 const s = map.get(p.id) ?? EMPTY_STAT;
                 return (
-                  <tr key={p.id}>
+                  <tr key={p.id} className={p.played ? '' : 'dnp'}>
                     <td className="sticky-col">
                       <span className="row-num">#{p.number || '—'}</span> {p.name || '(名前未設定)'}
+                      {p.starter && <span className="row-badge">先発</span>}
+                      {!p.played && <span className="row-badge dnp-badge">未出場</span>}
                     </td>
                     {columns.map((c) => <td key={c.key}>{cell(s, c.key)}</td>)}
                   </tr>

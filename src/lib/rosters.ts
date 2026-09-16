@@ -56,5 +56,5 @@ export function deleteRoster(id: string): void {
 }
 
 export function rosterToPlayers(roster: SavedRoster): Player[] {
-  return roster.players.map((p) => ({ id: uid(), number: p.number, name: p.name, onCourt: false }));
+  return roster.players.map((p) => ({ id: uid(), number: p.number, name: p.name, starter: false, played: false }));
 }
