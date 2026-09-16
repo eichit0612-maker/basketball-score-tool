@@ -129,3 +129,26 @@ export function pct(made: number, att: number): string {
 export function teamFoulsInQuarter(events: GameEvent[], side: Side, quarter: number): number {
   return events.filter((e) => e.side === side && e.type === 'PF' && e.quarter === quarter).length;
 }
+
+export type StatColumnKey = keyof StatLine | 'fg' | 'fg3' | 'ft';
+export interface StatColumn { key: StatColumnKey; label: string }
+
+/** 実際に記録されている種類にあわせて表の列を決める（使っていない項目は列ごと出さない） */
+export function statColumns(events: GameEvent[]): StatColumn[] {
+  const kinds = new Set(events.map((e) => e.type));
+  const cols: StatColumn[] = [
+    { key: 'pts', label: 'PTS' },
+    { key: 'fg', label: 'FG' },
+    { key: 'fg3', label: '3P' },
+    { key: 'ft', label: 'FT' },
+  ];
+  if (kinds.has('OREB') || kinds.has('DREB')) {
+    cols.push({ key: 'oreb', label: 'OR' }, { key: 'dreb', label: 'DR' }, { key: 'reb', label: 'REB' });
+  }
+  if (kinds.has('AST')) cols.push({ key: 'ast', label: 'AST' });
+  if (kinds.has('STL')) cols.push({ key: 'stl', label: 'STL' });
+  if (kinds.has('BLK')) cols.push({ key: 'blk', label: 'BLK' });
+  if (kinds.has('TOV')) cols.push({ key: 'tov', label: 'TO' });
+  cols.push({ key: 'pf', label: 'F' });
+  return cols;
+}

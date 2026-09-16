@@ -6,8 +6,9 @@ import { ACTION_META, statsBySide, teamFoulsInQuarter } from '../lib/stats';
 import { quarterLabel } from '../lib/format';
 import { useGame } from '../lib/useGame';
 
+// 一人で記録するため、記録するのはシュートの成否とファウルだけに絞っている
 const SHOT_ACTIONS: EventType[] = ['FG2M', 'FG2A', 'FG3M', 'FG3A', 'FTM', 'FTA'];
-const OTHER_ACTIONS: EventType[] = ['OREB', 'DREB', 'AST', 'STL', 'BLK', 'TOV', 'PF'];
+const OTHER_ACTIONS: EventType[] = ['PF'];
 
 export default function Live() {
   const { id } = useParams();
@@ -16,7 +17,6 @@ export default function Live() {
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [subMode, setSubMode] = useState(false);
   const [toast, setToast] = useState('');
-  const [assistFor, setAssistFor] = useState<{ scorerId: string | null; side: Side } | null>(null);
 
   useEffect(() => {
     if (!toast) return;
@@ -46,14 +46,6 @@ export default function Live() {
     (_, i) => i + 1,
   );
 
-  /** アシスト候補：コート上の選手がいればその5人、いなければ全員（得点者は除く） */
-  const assistCandidates = (() => {
-    if (!assistFor) return [];
-    const list = sideTeam(game, assistFor.side).players.filter((p) => p.id !== assistFor.scorerId);
-    const onCourt = list.filter((p) => p.onCourt);
-    return onCourt.length > 0 ? onCourt : list;
-  })();
-
   function addEvent(type: EventType, targetSide: Side, targetPlayerId: string | null) {
     update((g) => ({
       ...g,
@@ -72,22 +64,10 @@ export default function Live() {
     addEvent(type, side, playerId);
     const who = selected ? `#${selected.number} ${selected.name}` : 'チーム';
     setToast(`${who} : ${ACTION_META[type].label}`);
-    // シュート成功のあとはアシストを1タップで足せるようにする
-    const isMadeFG = type === 'FG2M' || type === 'FG3M';
-    setAssistFor(isMadeFG && team.players.length > 1 ? { scorerId: playerId, side } : null);
-  }
-
-  function recordAssist(pid: string) {
-    if (!assistFor) return;
-    const p = assistCandidates.find((x) => x.id === pid);
-    addEvent('AST', assistFor.side, pid);
-    setAssistFor(null);
-    setToast(p ? `アシスト: #${p.number} ${p.name}` : 'アシストを記録しました');
   }
 
   function undoLast() {
     update((g) => (g.events.length === 0 ? g : { ...g, events: g.events.slice(0, -1) }));
-    setAssistFor(null);
     setToast('直前のプレーを取り消しました');
   }
 
@@ -111,12 +91,10 @@ export default function Live() {
   }
 
   function setQuarter(q: number) {
-    setAssistFor(null);
     update((g) => ({ ...g, quarter: q }));
   }
 
   function addOvertime() {
-    setAssistFor(null);
     update((g) => ({ ...g, quarter: quarters.length + 1 }));
   }
 
@@ -215,20 +193,6 @@ export default function Live() {
         )}
       </section>
 
-      {assistFor && assistCandidates.length > 0 && (
-        <section className="assist-bar">
-          <span className="assist-label">アシストは？</span>
-          <div className="assist-choices">
-            {assistCandidates.map((p) => (
-              <button key={p.id} className="btn tiny" onClick={() => recordAssist(p.id)}>
-                #{p.number || '—'} {p.name || '(名前未設定)'}
-              </button>
-            ))}
-            <button className="btn tiny" onClick={() => setAssistFor(null)}>なし</button>
-          </div>
-        </section>
-      )}
-
       <section className="actions">
         <div className="action-target">
           <span className="at-name">{selected ? `#${selected.number} ${selected.name}` : 'チーム記録'}</span>
@@ -236,8 +200,8 @@ export default function Live() {
             <span className="at-line">
               {selectedStat.pts}点 ・ FG {selectedStat.fg2m + selectedStat.fg3m}/{selectedStat.fg2a + selectedStat.fg3a}
               {' '}・ 3P {selectedStat.fg3m}/{selectedStat.fg3a}
-              {' '}・ REB {selectedStat.reb} ・ AST {selectedStat.ast}
-              {' '}・ STL {selectedStat.stl} ・ TO {selectedStat.tov} ・ F {selectedStat.pf}
+              {' '}・ FT {selectedStat.ftm}/{selectedStat.fta}
+              {' '}・ ファウル {selectedStat.pf}
             </span>
           )}
         </div>

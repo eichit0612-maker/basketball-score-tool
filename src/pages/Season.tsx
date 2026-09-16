@@ -2,25 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Game, StatLine } from '../types';
 import { loadGames } from '../lib/storage';
-import { pct } from '../lib/stats';
+import { pct, statColumns, type StatColumnKey } from '../lib/stats';
 import { playedGames, playerSeason, scoreTrend, teamNames, teamSeason } from '../lib/season';
 
 type Mode = 'total' | 'avg';
 
-const COLUMNS: { key: keyof StatLine | 'fg' | 'fg3' | 'ft'; label: string }[] = [
-  { key: 'pts', label: 'PTS' },
-  { key: 'reb', label: 'REB' },
-  { key: 'ast', label: 'AST' },
-  { key: 'stl', label: 'STL' },
-  { key: 'blk', label: 'BLK' },
-  { key: 'tov', label: 'TO' },
-  { key: 'pf', label: 'F' },
-  { key: 'fg', label: 'FG' },
-  { key: 'fg3', label: '3P' },
-  { key: 'ft', label: 'FT' },
-];
 
-function cell(stat: StatLine, key: (typeof COLUMNS)[number]['key'], gp: number, mode: Mode): string {
+function cell(stat: StatLine, key: StatColumnKey, gp: number, mode: Mode): string {
   const div = mode === 'avg' && gp > 0 ? gp : 1;
   const fmt = (n: number) => (mode === 'avg' ? (n / div).toFixed(1) : String(n));
   switch (key) {
@@ -42,7 +30,8 @@ export default function Season() {
   const teams = useMemo(() => teamSeason(games), [games]);
   const players = useMemo(() => playerSeason(games, team || undefined), [games, team]);
   const trend = useMemo(() => (team ? scoreTrend(games, team) : []), [games, team]);
-  const played = playedGames(games);
+  const played = useMemo(() => playedGames(games), [games]);
+  const columns = useMemo(() => statColumns(played.flatMap((g) => g.events)), [played]);
 
   return (
     <div className="page">
@@ -109,7 +98,7 @@ export default function Season() {
                   <tr>
                     <th className="sticky-col">選手</th>
                     <th>試合</th>
-                    {COLUMNS.map((c) => <th key={c.key}>{c.label}</th>)}
+                    {columns.map((c) => <th key={c.key}>{c.label}</th>)}
                     <th>FG%</th>
                   </tr>
                 </thead>
@@ -121,12 +110,12 @@ export default function Season() {
                         {!team && <span className="row-team">{p.teamName}</span>}
                       </td>
                       <td>{p.gp}</td>
-                      {COLUMNS.map((c) => <td key={c.key}>{cell(p.total, c.key, p.gp, mode)}</td>)}
+                      {columns.map((c) => <td key={c.key}>{cell(p.total, c.key, p.gp, mode)}</td>)}
                       <td>{pct(p.total.fg2m + p.total.fg3m, p.total.fg2a + p.total.fg3a)}</td>
                     </tr>
                   ))}
                   {players.length === 0 && (
-                    <tr><td className="sticky-col" colSpan={COLUMNS.length + 3}>記録がありません。</td></tr>
+                    <tr><td className="sticky-col" colSpan={columns.length + 3}>記録がありません。</td></tr>
                   )}
                 </tbody>
               </table>

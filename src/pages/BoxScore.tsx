@@ -1,28 +1,17 @@
 import { Link, useParams } from 'react-router-dom';
 import type { Side, StatLine } from '../types';
 import { sideTeam } from '../lib/storage';
-import { ACTION_META, EMPTY_STAT, foulsByQuarter, pct, scoreByQuarter, statsBySide, TEAM_KEY, teamTotal } from '../lib/stats';
+import {
+  ACTION_META, EMPTY_STAT, foulsByQuarter, pct, scoreByQuarter,
+  statColumns, statsBySide, TEAM_KEY, teamTotal, type StatColumnKey,
+} from '../lib/stats';
 import { quarterLabel } from '../lib/format';
 import { downloadCsv } from '../lib/csv';
 import { useGame } from '../lib/useGame';
 import MarginChart from '../components/MarginChart';
 
-const COLUMNS: { key: keyof StatLine | 'fg' | 'fg3' | 'ft'; label: string }[] = [
-  { key: 'pts', label: 'PTS' },
-  { key: 'fg', label: 'FG' },
-  { key: 'fg3', label: '3P' },
-  { key: 'ft', label: 'FT' },
-  { key: 'oreb', label: 'OR' },
-  { key: 'dreb', label: 'DR' },
-  { key: 'reb', label: 'REB' },
-  { key: 'ast', label: 'AST' },
-  { key: 'stl', label: 'STL' },
-  { key: 'blk', label: 'BLK' },
-  { key: 'tov', label: 'TO' },
-  { key: 'pf', label: 'F' },
-];
 
-function cell(stat: StatLine, key: (typeof COLUMNS)[number]['key']): string {
+function cell(stat: StatLine, key: StatColumnKey): string {
   switch (key) {
     case 'fg': return `${stat.fg2m + stat.fg3m}/${stat.fg2a + stat.fg3a}`;
     case 'fg3': return `${stat.fg3m}/${stat.fg3a}`;
@@ -44,6 +33,7 @@ export default function BoxScore() {
   const awayF = foulsByQuarter(game, 'away');
   const homeTotal = teamTotal(game.events, 'home');
   const awayTotal = teamTotal(game.events, 'away');
+  const columns = statColumns(game.events);
 
   function renderTable(side: Side) {
     const team = sideTeam(game!, side);
@@ -64,7 +54,7 @@ export default function BoxScore() {
             <thead>
               <tr>
                 <th className="sticky-col">選手</th>
-                {COLUMNS.map((c) => <th key={c.key}>{c.label}</th>)}
+                {columns.map((c) => <th key={c.key}>{c.label}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -75,19 +65,19 @@ export default function BoxScore() {
                     <td className="sticky-col">
                       <span className="row-num">#{p.number || '—'}</span> {p.name || '(名前未設定)'}
                     </td>
-                    {COLUMNS.map((c) => <td key={c.key}>{cell(s, c.key)}</td>)}
+                    {columns.map((c) => <td key={c.key}>{cell(s, c.key)}</td>)}
                   </tr>
                 );
               })}
               {teamOnly && (
                 <tr className="team-row">
                   <td className="sticky-col">チーム記録</td>
-                  {COLUMNS.map((c) => <td key={c.key}>{cell(teamOnly, c.key)}</td>)}
+                  {columns.map((c) => <td key={c.key}>{cell(teamOnly, c.key)}</td>)}
                 </tr>
               )}
               <tr className="total-row">
                 <td className="sticky-col">合計</td>
-                {COLUMNS.map((c) => <td key={c.key}>{cell(total, c.key)}</td>)}
+                {columns.map((c) => <td key={c.key}>{cell(total, c.key)}</td>)}
               </tr>
             </tbody>
           </table>
