@@ -151,6 +151,7 @@ export default function Live() {
 
       <p className="rec-hint">記録中 <strong>{team.name}</strong></p>
 
+      <div className="work">
       <section className="players">
         <div className="players-head">
           <span>選手</span>
@@ -218,6 +219,7 @@ export default function Live() {
           ))}
         </div>
       </section>
+      </div>
 
       <section className="log">
         <div className="log-head">

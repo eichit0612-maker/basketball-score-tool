@@ -470,3 +470,38 @@ select.input {
 .ui-option.on { border-color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
 .ui-option .ui-name { font-weight: 700; font-size: 14px; }
 .ui-option .ui-note { font-size: 12px; color: var(--muted); }
+
+/* --- タブレット以上：選手カードを詰めて全員を一画面に入れる --- */
+@media (min-width: 600px) {
+  .live .player-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px; }
+  .live .player-card { min-height: 58px; padding: 6px 4px; gap: 0; }
+  .live .player-card .p-num { font-size: 15px; }
+  .live .player-card .p-name {
+    font-size: 11px;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .live .player-card .p-sub { font-size: 10px; }
+}
+
+/* --- 画面が広いとき（タブレット横向き・PC）は選手とボタンを左右に並べる --- */
+@media (min-width: 900px) {
+  .live .work {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 14px;
+    align-items: start;
+  }
+  .live .work .actions { margin-top: 0; }
+  .live .work .action-grid { grid-template-columns: repeat(2, 1fr); }
+  /* 下部バーを固定しない（選手カードを隠さないため） */
+  .live .sticky-bottom {
+    position: static;
+    background: none;
+    border-top: none;
+    padding: 14px 0 0;
+  }
+  .live { padding-bottom: 16px; }
+}
