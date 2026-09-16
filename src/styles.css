@@ -353,3 +353,16 @@ select.input {
 .action-target { display: flex; flex-direction: column; gap: 2px; }
 .action-target .at-name { font-size: 15px; font-weight: 700; color: var(--text); }
 .action-target .at-line { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- score chart ---------- */
+.score-chart svg { width: 100%; height: auto; display: block; }
+.sc-grid { stroke: var(--line); stroke-width: 1; }
+.sc-qline { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 3; }
+.sc-line { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.sc-line.home { stroke: var(--accent-2); }
+.sc-line.away { stroke: #6b4bd6; }
+.sc-tick, .sc-label { fill: var(--muted); font-size: 11px; }
+.sc-legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+.sc-legend .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.sc-legend .dot.home { background: var(--accent-2); }
+.sc-legend .dot.away { background: #6b4bd6; margin-left: 12px; }

@@ -2,12 +2,13 @@ import { Link, useParams } from 'react-router-dom';
 import type { Side, StatLine } from '../types';
 import { sideTeam } from '../lib/storage';
 import {
-  ACTION_META, EMPTY_STAT, foulsByQuarter, pct, scoreByQuarter,
+  EMPTY_STAT, foulsByQuarter, pct, scoreByQuarter,
   STAT_COLUMNS, statsBySide, TEAM_KEY, teamTotal, type StatColumnKey,
 } from '../lib/stats';
 import { quarterLabel } from '../lib/format';
 import { downloadCsv } from '../lib/csv';
 import { useGame } from '../lib/useGame';
+import ScoreChart from '../components/ScoreChart';
 
 
 function cell(stat: StatLine, key: StatColumnKey): string {
@@ -153,27 +154,16 @@ export default function BoxScore() {
         )}
       </section>
 
+      {game.events.length > 0 && (
+        <section className="card">
+          <h3 className="box-title">得点の推移</h3>
+          <ScoreChart game={game} />
+        </section>
+      )}
+
       {renderTable('home')}
       {renderTable('away')}
 
-      <section className="card">
-        <h3 className="box-title">プレーログ（{game.events.length}件）</h3>
-        <ul className="full-log">
-          {[...game.events].reverse().map((ev) => {
-            const t = sideTeam(game, ev.side);
-            const p = t.players.find((x) => x.id === ev.playerId);
-            return (
-              <li key={ev.id}>
-                <span className="log-time">{quarterLabel(ev.quarter, game.quarterCount)}</span>
-                <span className="log-team">{t.name}</span>
-                <span className="log-player">{p ? `#${p.number} ${p.name}` : 'チーム'}</span>
-                <span className="log-act">{ACTION_META[ev.type].label}</span>
-              </li>
-            );
-          })}
-          {game.events.length === 0 && <li className="empty small">記録がありません。</li>}
-        </ul>
-      </section>
     </div>
   );
 }
