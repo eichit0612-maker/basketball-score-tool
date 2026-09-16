@@ -386,8 +386,9 @@ select.input {
 .sc-legend .dot.home { background: var(--accent-2); }
 .sc-legend .dot.away { background: var(--away); margin-left: 12px; }
 
-/* --- タブレット以上：選手カードを詰めて全員を一画面に入れる --- */
-@media (min-width: 600px) {
+/* --- タブレット幅：選手カードを詰めて全員を一画面に入れる ---
+   PC（1100px超）は元のカードサイズのまま。 */
+@media (min-width: 600px) and (max-width: 1100px) {
   .live .player-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px; }
   .live .player-card { min-height: 58px; padding: 6px 4px; gap: 0; }
   .live .player-card .p-num { font-size: 15px; }
@@ -401,8 +402,9 @@ select.input {
   .live .player-card .p-sub { font-size: 10px; }
 }
 
-/* --- 画面が広いとき（タブレット横向き・PC）は選手とボタンを左右に並べる --- */
-@media (min-width: 900px) {
+/* --- 縦が狭い横長画面（タブレット横向きなど）だけ、選手とボタンを左右に並べる ---
+   縦に余裕のあるPCでは従来どおり縦に並べる。 */
+@media (min-width: 900px) and (max-height: 760px) {
   .live .work {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 360px;
