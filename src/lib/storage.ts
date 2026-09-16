@@ -64,8 +64,6 @@ export function newGame(): Game {
     events: [],
     quarter: 1,
     quarterCount: 4,
-    quarterMinutes: 10,
-    clock: 10 * 60,
     status: 'setup',
     createdAt: now,
     updatedAt: now,

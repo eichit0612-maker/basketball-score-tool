@@ -354,3 +354,13 @@ select.input {
 .mc-legend .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 .mc-legend .dot.home { background: rgba(47, 111, 237, .8); }
 .mc-legend .dot.away { background: rgba(107, 75, 214, .8); margin-left: 10px; }
+
+/* ---------- quarter bar (タイマー廃止後) ---------- */
+.scoreboard.compact { grid-template-columns: 1fr 1fr; }
+.quarter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.btn.quarter { flex: 1 1 60px; padding: 12px 8px; font-size: 16px; font-weight: 700; }
+.btn.quarter.on { background: var(--accent); border-color: var(--accent); color: #17120c; }
+
+.action-target { display: flex; flex-direction: column; gap: 2px; }
+.action-target .at-name { font-size: 15px; font-weight: 700; color: var(--text); }
+.action-target .at-line { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }

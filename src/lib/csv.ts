@@ -54,14 +54,12 @@ export function gameToCsv(game: Game): string {
   lines.push(...teamRows(game, 'away'));
   lines.push('');
   lines.push(esc('プレーログ'));
-  lines.push(['Q', '残り時間', 'チーム', '選手', 'プレー'].map(esc).join(','));
+  lines.push(['Q', 'チーム', '選手', 'プレー'].map(esc).join(','));
   for (const ev of game.events) {
     const team = sideTeam(game, ev.side);
     const p = team.players.find((x) => x.id === ev.playerId);
-    const mm = String(Math.floor(ev.clock / 60)).padStart(2, '0');
-    const ss = String(ev.clock % 60).padStart(2, '0');
     lines.push([
-      `Q${ev.quarter}`, `${mm}:${ss}`, team.name,
+      `Q${ev.quarter}`, team.name,
       p ? `#${p.number} ${p.name}` : 'チーム',
       ACTION_META[ev.type].label,
     ].map(esc).join(','));

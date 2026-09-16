@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import type { Side, StatLine } from '../types';
 import { sideTeam } from '../lib/storage';
 import { ACTION_META, EMPTY_STAT, foulsByQuarter, pct, scoreByQuarter, statsBySide, TEAM_KEY, teamTotal } from '../lib/stats';
-import { clockText, quarterLabel } from '../lib/format';
+import { quarterLabel } from '../lib/format';
 import { downloadCsv } from '../lib/csv';
 import { useGame } from '../lib/useGame';
 import MarginChart from '../components/MarginChart';
@@ -182,7 +182,7 @@ export default function BoxScore() {
             const p = t.players.find((x) => x.id === ev.playerId);
             return (
               <li key={ev.id}>
-                <span className="log-time">{quarterLabel(ev.quarter, game.quarterCount)} {clockText(ev.clock)}</span>
+                <span className="log-time">{quarterLabel(ev.quarter, game.quarterCount)}</span>
                 <span className="log-team">{t.name}</span>
                 <span className="log-player">{p ? `#${p.number} ${p.name}` : 'チーム'}</span>
                 <span className="log-act">{ACTION_META[ev.type].label}</span>

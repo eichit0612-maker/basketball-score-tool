@@ -89,11 +89,7 @@ export default function Setup() {
   }
 
   function start() {
-    patch((g) => ({
-      ...g,
-      status: 'live',
-      clock: g.status === 'setup' ? g.quarterMinutes * 60 : g.clock,
-    }));
+    patch((g) => ({ ...g, status: 'live' }));
     nav(`/game/${id}/live`);
   }
 
@@ -224,20 +220,6 @@ export default function Setup() {
               max={8}
               value={game.quarterCount}
               onChange={(e) => patch((g) => ({ ...g, quarterCount: Math.max(1, Number(e.target.value) || 1) }))}
-            />
-          </label>
-          <label className="field">
-            <span>1クォーターの分数</span>
-            <input
-              className="input"
-              type="number"
-              min={1}
-              max={20}
-              value={game.quarterMinutes}
-              onChange={(e) => {
-                const m = Math.max(1, Number(e.target.value) || 1);
-                patch((g) => ({ ...g, quarterMinutes: m, clock: g.status === 'setup' ? m * 60 : g.clock }));
-              }}
             />
           </label>
         </div>

@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import type { EventType, Side } from '../types';
 import { sideTeam, uid, withTeam } from '../lib/storage';
 import { ACTION_META, statsBySide, teamFoulsInQuarter } from '../lib/stats';
-import { clockText, quarterLabel } from '../lib/format';
+import { quarterLabel } from '../lib/format';
 import { useGame } from '../lib/useGame';
 
 const SHOT_ACTIONS: EventType[] = ['FG2M', 'FG2A', 'FG3M', 'FG3A', 'FTM', 'FTA'];
@@ -14,23 +14,9 @@ export default function Live() {
   const { game, loaded, update } = useGame(id);
   const [side, setSide] = useState<Side>('home');
   const [playerId, setPlayerId] = useState<string | null>(null);
-  const [running, setRunning] = useState(false);
   const [subMode, setSubMode] = useState(false);
   const [toast, setToast] = useState('');
   const [assistFor, setAssistFor] = useState<{ scorerId: string | null; side: Side } | null>(null);
-
-  // タイマー
-  useEffect(() => {
-    if (!running) return;
-    const t = setInterval(() => {
-      update((g) => (g.clock <= 0 ? g : { ...g, clock: g.clock - 1 }));
-    }, 1000);
-    return () => clearInterval(t);
-  }, [running, update]);
-
-  useEffect(() => {
-    if (game && game.clock <= 0 && running) setRunning(false);
-  }, [game, running]);
 
   useEffect(() => {
     if (!toast) return;
@@ -51,9 +37,14 @@ export default function Live() {
   const homeScore = game.events.filter((e) => e.side === 'home').reduce((s, e) => s + ACTION_META[e.type].points, 0);
   const awayScore = game.events.filter((e) => e.side === 'away').reduce((s, e) => s + ACTION_META[e.type].points, 0);
   const selected = playerId ? team.players.find((p) => p.id === playerId) ?? null : null;
+  const selectedStat = playerId ? statMap.get(playerId) : undefined;
   const recent = game.events.slice(-8).reverse();
   const homeFouls = teamFoulsInQuarter(game.events, 'home', game.quarter);
   const awayFouls = teamFoulsInQuarter(game.events, 'away', game.quarter);
+  const quarters = Array.from(
+    { length: Math.max(game.quarterCount, game.quarter, ...game.events.map((e) => e.quarter)) },
+    (_, i) => i + 1,
+  );
 
   /** アシスト候補：コート上の選手がいればその5人、いなければ全員（得点者は除く） */
   const assistCandidates = (() => {
@@ -70,7 +61,6 @@ export default function Live() {
         id: uid(),
         ts: Date.now(),
         quarter: g.quarter,
-        clock: g.clock,
         side: targetSide,
         playerId: targetPlayerId,
         type,
@@ -120,25 +110,18 @@ export default function Live() {
     setPlayerId((cur) => (cur === pid ? null : pid));
   }
 
-  function nextQuarter() {
-    setRunning(false);
+  function setQuarter(q: number) {
     setAssistFor(null);
-    update((g) => ({ ...g, quarter: g.quarter + 1, clock: g.quarterMinutes * 60 }));
+    update((g) => ({ ...g, quarter: q }));
   }
 
-  function prevQuarter() {
-    setRunning(false);
+  function addOvertime() {
     setAssistFor(null);
-    update((g) => (g.quarter <= 1 ? g : { ...g, quarter: g.quarter - 1, clock: 0 }));
-  }
-
-  function adjustClock(delta: number) {
-    update((g) => ({ ...g, clock: Math.max(0, g.clock + delta) }));
+    update((g) => ({ ...g, quarter: quarters.length + 1 }));
   }
 
   function finish() {
     if (!confirm('試合を終了してスタッツ画面に移動します。よろしいですか？（あとから記録を再開できます）')) return;
-    setRunning(false);
     update((g) => ({ ...g, status: 'finished' }));
     location.hash = `#/game/${id}/box`;
   }
@@ -151,7 +134,7 @@ export default function Live() {
         <Link className="btn tiny" to={`/game/${game.id}/box`}>スタッツ</Link>
       </header>
 
-      <section className="scoreboard">
+      <section className="scoreboard compact">
         <button
           className={`sb-team ${side === 'home' ? 'active' : ''}`}
           onClick={() => { setSide('home'); setPlayerId(null); }}
@@ -162,21 +145,6 @@ export default function Live() {
             Q内ファウル {homeFouls}{homeFouls >= 4 ? '・ボーナス' : ''}
           </span>
         </button>
-
-        <div className="sb-center">
-          <div className="sb-q">{quarterLabel(game.quarter, game.quarterCount)}</div>
-          <button className={`sb-clock ${running ? 'running' : ''}`} onClick={() => setRunning((r) => !r)}>
-            {clockText(game.clock)}
-          </button>
-          <div className="sb-clock-actions">
-            <button className="btn tiny" onClick={() => adjustClock(-10)}>-10秒</button>
-            <button className="btn tiny" onClick={() => adjustClock(10)}>+10秒</button>
-          </div>
-          <div className="sb-clock-actions">
-            <button className="btn tiny" onClick={prevQuarter}>前のQ</button>
-            <button className="btn tiny" onClick={nextQuarter}>次のQ →</button>
-          </div>
-        </div>
 
         <button
           className={`sb-team ${side === 'away' ? 'active' : ''}`}
@@ -190,8 +158,21 @@ export default function Live() {
         </button>
       </section>
 
+      <section className="quarter-bar">
+        {quarters.map((q) => (
+          <button
+            key={q}
+            className={`btn quarter ${game.quarter === q ? 'on' : ''}`}
+            onClick={() => setQuarter(q)}
+          >
+            {quarterLabel(q, game.quarterCount)}
+          </button>
+        ))}
+        <button className="btn tiny" onClick={addOvertime}>＋OT</button>
+      </section>
+
       <p className="rec-hint">
-        記録中: <strong>{team.name}</strong>（上のチーム名をタップで切替）→ 選手を選んでプレーをタップ
+        記録中: <strong>{team.name}</strong>（チーム名をタップで切替）→ 選手を選んでプレーをタップ
       </p>
 
       <section className="players">
@@ -250,7 +231,15 @@ export default function Live() {
 
       <section className="actions">
         <div className="action-target">
-          記録対象: <strong>{selected ? `#${selected.number} ${selected.name}` : 'チーム'}</strong>
+          <span className="at-name">{selected ? `#${selected.number} ${selected.name}` : 'チーム記録'}</span>
+          {selectedStat && (
+            <span className="at-line">
+              {selectedStat.pts}点 ・ FG {selectedStat.fg2m + selectedStat.fg3m}/{selectedStat.fg2a + selectedStat.fg3a}
+              {' '}・ 3P {selectedStat.fg3m}/{selectedStat.fg3a}
+              {' '}・ REB {selectedStat.reb} ・ AST {selectedStat.ast}
+              {' '}・ STL {selectedStat.stl} ・ TO {selectedStat.tov} ・ F {selectedStat.pf}
+            </span>
+          )}
         </div>
         <div className="action-grid shots">
           {SHOT_ACTIONS.map((a) => (
@@ -281,7 +270,7 @@ export default function Live() {
             const p = t.players.find((x) => x.id === ev.playerId);
             return (
               <li key={ev.id}>
-                <span className="log-time">{quarterLabel(ev.quarter, game.quarterCount)} {clockText(ev.clock)}</span>
+                <span className="log-time">{quarterLabel(ev.quarter, game.quarterCount)}</span>
                 <span className="log-team">{t.name}</span>
                 <span className="log-player">{p ? `#${p.number} ${p.name}` : 'チーム'}</span>
                 <span className="log-act">{ACTION_META[ev.type].label}</span>

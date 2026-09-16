@@ -24,7 +24,8 @@ export interface GameEvent {
   id: string;
   ts: number;            // 記録した実時刻
   quarter: number;       // 1〜
-  clock: number;         // そのクォーターの残り秒数
+  /** 旧バージョン（タイマー機能あり）で記録した試合にだけ入っている残り秒数 */
+  clock?: number;
   side: Side;
   playerId: string | null; // null = チーム記録（チームリバウンド等）
   type: EventType;
@@ -41,8 +42,6 @@ export interface Game {
   events: GameEvent[];
   quarter: number;
   quarterCount: number;
-  quarterMinutes: number;
-  clock: number;         // 残り秒
   status: GameStatus;
   createdAt: number;
   updatedAt: number;
