@@ -7,7 +7,6 @@ import {
 } from '../lib/stats';
 import { quarterLabel } from '../lib/format';
 import { downloadCsv } from '../lib/csv';
-import { downloadScoreSheet } from '../lib/scoresheet';
 import { useGame } from '../lib/useGame';
 import ScoreChart from '../components/ScoreChart';
 
@@ -103,7 +102,6 @@ export default function BoxScore() {
         <Link className="btn tiny" to="/">← 一覧</Link>
         <Link className="btn tiny" to={`/game/${game.id}/live`}>記録画面</Link>
         <Link className="btn tiny" to={`/game/${game.id}/sheet`}>公式形式</Link>
-        <button className="btn tiny" onClick={() => void downloadScoreSheet(game)}>スコアシート(Excel)</button>
         <button className="btn tiny" onClick={() => downloadCsv(game)}>CSV出力</button>
         <button className="btn tiny" onClick={() => window.print()}>印刷</button>
       </header>

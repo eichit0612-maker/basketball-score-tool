@@ -3,24 +3,38 @@ import { Link, useParams } from 'react-router-dom';
 import type { Game, Side } from '../types';
 import { sideTeam } from '../lib/storage';
 import { foulsByQuarter, scoreByQuarter, teamTotal } from '../lib/stats';
-import { playerFouls, runningMarks, type RunMark } from '../lib/sheet';
+import { playerFouls, quarterPen, runningScore, type RunMark } from '../lib/sheet';
 import { useGame } from '../lib/useGame';
 
 const PLAYER_ROWS = 18;
+const FOUL_CELLS = 5;
 const RUN_ROWS = 40;
 const RUN_BLOCKS = 4;
 
+// ランニングスコア表の実寸（mm）。斜線の重ね描きで位置を計算するため固定する
+const RUN_W_WHO = 4.2;
+const RUN_W_PT = 5.8;
+const RUN_BLOCK_W = RUN_W_WHO * 2 + RUN_W_PT * 2;
+const RUN_HEAD_H = 7.6;
+const RUN_ROW_H = 3.4;
+const RUN_TABLE_W = RUN_BLOCK_W * RUN_BLOCKS;
+const RUN_TABLE_H = RUN_HEAD_H + RUN_ROW_H * RUN_ROWS;
+
 function TeamBlock({ game, side }: { game: Game; side: Side }) {
   const team = sideTeam(game, side);
-  const fouls = foulsByQuarter(game, side);
+  const teamFouls = foulsByQuarter(game, side);
+  // 未使用欄に線を引くのはゲーム終了時の処理
+  const finished = game.status === 'finished';
+  // 公式シートはユニフォーム番号順に記入する
   const players = [...team.players].sort(
     (a, b) => (Number(a.number) || 999) - (Number(b.number) || 999),
-  );
+  ).slice(0, PLAYER_ROWS);
+  const emptyRows = PLAYER_ROWS - players.length;
 
   return (
     <div className="ss-team">
       <div className="ss-team-name">
-        <span className="ss-label">チーム{side === 'home' ? 'A' : 'B'}／Team {side === 'home' ? 'A' : 'B'}</span>
+        <span className="ss-label">チーム{side === 'home' ? 'A' : 'B'}<br />Team {side === 'home' ? 'A' : 'B'}</span>
         <span className="ss-name-value">{team.name}</span>
       </div>
 
@@ -28,7 +42,7 @@ function TeamBlock({ game, side }: { game: Game; side: Side }) {
         <div className="ss-timeouts">
           <div className="ss-label">タイムアウト<br />Time-outs</div>
           <div className="ss-to-grid">
-            <div className="ss-to-row two"><i /><i /></div>
+            <div className="ss-to-row"><i /><i /></div>
             <div className="ss-to-row"><i /><i /><i /></div>
             <div className="ss-to-row"><i /><i /><i /></div>
           </div>
@@ -38,16 +52,24 @@ function TeamBlock({ game, side }: { game: Game; side: Side }) {
           <div className="ss-tf-title">チームファウル　Team fouls</div>
           {[[1, 2], [3, 4]].map((pair) => (
             <div className="ss-tf-line" key={pair[0]}>
-              {pair.map((q) => (
-                <span className="ss-tf-q" key={q}>
-                  <span className="ss-tf-label">クォーター {q}</span>
-                  {[1, 2, 3, 4].map((n) => (
-                    <i key={n} className={(fouls[q - 1] ?? 0) >= n ? 'used' : ''}>
-                      {(fouls[q - 1] ?? 0) >= n ? '✕' : n}
-                    </i>
-                  ))}
-                </span>
-              ))}
+              {pair.map((q) => {
+                const used = teamFouls[q - 1] ?? 0;
+                const pen = quarterPen(q, game.quarterCount);
+                const played = q <= game.quarter || used > 0;
+                return (
+                  <span className="ss-tf-q" key={q}>
+                    <span className="ss-tf-label">クォーター {q}</span>
+                    {[1, 2, 3, 4].map((n) => (
+                      <i
+                        key={n}
+                        className={used >= n ? `mark ${pen}` : played ? 'unused' : ''}
+                      >
+                        {used >= n ? '✕' : n}
+                      </i>
+                    ))}
+                  </span>
+                );
+              })}
             </div>
           ))}
           <div className="ss-tf-ot">オーバータイム Over times</div>
@@ -58,93 +80,178 @@ function TeamBlock({ game, side }: { game: Game; side: Side }) {
         <thead>
           <tr>
             <th className="c-row">No.</th>
-            <th className="c-lic">License<br />No.</th>
-            <th className="c-name">選手氏名　Name of Players</th>
+            <th className="c-lic">Licence<br />no.</th>
+            <th className="c-name">選手氏名 Players</th>
             <th className="c-num">No.</th>
             <th className="c-in">Player<br />in</th>
-            <th colSpan={5} className="c-fouls">ファウル　Fouls</th>
+            <th colSpan={FOUL_CELLS} className="c-fouls">ファウル　Fouls</th>
           </tr>
         </thead>
         <tbody>
-          {Array.from({ length: PLAYER_ROWS }, (_, i) => {
-            const p = players[i];
-            const f = p ? playerFouls(game, side, p.id) : 0;
+          {players.map((p, i) => {
+            const fouls = playerFouls(game, side, p.id);
             return (
-              <tr key={i}>
+              <tr key={p.id}>
                 <td className="c-row">{i + 1}</td>
                 <td className="c-lic" />
-                <td className="c-name">{p?.name ?? ''}</td>
-                <td className="c-num">{p?.number ?? ''}</td>
-                <td className="c-in">{p?.played ? '✓' : ''}</td>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <td key={n} className="c-foul">{p && f >= n ? 'P' : ''}</td>
-                ))}
+                <td className="c-name">{p.name}</td>
+                <td className="c-num">{p.number}</td>
+                <td className="c-in">
+                  {p.starter ? <span className="ss-in starter">✕</span>
+                    : p.played ? <span className="ss-in">✕</span> : ''}
+                </td>
+                {Array.from({ length: FOUL_CELLS }, (_, n) => {
+                  const f = fouls[n];
+                  if (!f) return <td key={n} className={`c-foul ${finished ? 'unused' : ''}`} />;
+                  return (
+                    <td key={n} className={`c-foul ${f.pen} ${f.firstHalf ? 'boxed' : ''}`}>P</td>
+                  );
+                })}
               </tr>
             );
           })}
-          <tr>
-            <td colSpan={3} className="c-coach">コーチ　Coach</td>
-            <td className="c-num" />
-            <td className="c-in" />
-            {[1, 2, 3, 4, 5].map((n) => <td key={n} className="c-foul" />)}
-          </tr>
-          <tr>
-            <td colSpan={3} className="c-coach">A.コーチ　A.Coach</td>
-            <td className="c-num" />
-            <td className="c-in" />
-            {[1, 2, 3, 4, 5].map((n) => <td key={n} className="c-foul" />)}
-          </tr>
+
+          {emptyRows > 0 && Array.from({ length: emptyRows }, (_, i) => (
+            <tr key={`e${i}`} className={i === 0 ? 'ss-empty first' : 'ss-empty'}>
+              <td className="c-row">{players.length + i + 1}</td>
+              <td className="c-lic" />
+              <td className="c-name" />
+              <td className="c-num" />
+              <td className="c-in" />
+              {i === 0 && (
+                <td className="c-foul-empty" colSpan={FOUL_CELLS} rowSpan={emptyRows} />
+              )}
+            </tr>
+          ))}
+
+          {['コーチ Coach', 'A.コーチ A.Coach'].map((label) => (
+            <tr key={label}>
+              <td colSpan={2} className="c-coach">{label}</td>
+              <td className="c-name" />
+              <td className="c-num" />
+              <td className="c-in" />
+              {Array.from({ length: FOUL_CELLS }, (_, n) => (
+                <td key={n} className={`c-foul ${finished ? 'unused' : ''}`} />
+              ))}
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
   );
 }
 
-function RunCell({ mark, value }: { mark: RunMark | undefined; value: number }) {
+function RunNumber({ mark, value }: { mark: RunMark | undefined; value: number }) {
   if (!mark) return <>{value}</>;
-  const cls = ['ss-hit', mark.freeThrow ? 'ft' : '', mark.quarterEnd ? 'qend' : ''].filter(Boolean).join(' ');
+  const cls = [
+    'ss-hit',
+    mark.pen,
+    mark.points === 1 ? 'ft' : 'fg',
+    mark.quarterEnd ? 'qend' : '',
+  ].filter(Boolean).join(' ');
   return <span className={cls}>{value}</span>;
 }
 
-function RunningScore({ game }: { game: Game }) {
-  const home = runningMarks(game, 'home');
-  const away = runningMarks(game, 'away');
+function RunWho({ mark }: { mark: RunMark | undefined }) {
+  if (!mark || !mark.number) return null;
+  // 3点は得点者の番号を○で囲む
+  return <span className={`ss-who ${mark.pen} ${mark.points === 3 ? 'three' : ''}`}>{mark.number}</span>;
+}
+
+/** 最終得点より後ろの空欄に引く斜線（ブロックごとに1本） */
+function tailLines(total: number): { block: number; y1: number; y2: number }[] {
+  const lines: { block: number; y1: number; y2: number }[] = [];
+  for (let b = 0; b < RUN_BLOCKS; b++) {
+    const startRow = Math.max(0, total - b * RUN_ROWS);
+    if (startRow >= RUN_ROWS) continue;
+    lines.push({
+      block: b,
+      y1: RUN_HEAD_H + startRow * RUN_ROW_H,
+      y2: RUN_HEAD_H + RUN_ROWS * RUN_ROW_H,
+    });
+  }
+  return lines;
+}
+
+function RunningScoreTable({ game }: { game: Game }) {
+  const home = runningScore(game, 'home');
+  const away = runningScore(game, 'away');
+  const finished = game.status === 'finished';
 
   return (
-    <table className="ss-run">
-      <thead>
-        <tr>
-          <th colSpan={RUN_BLOCKS * 4}>ランニングスコア　RUNNING SCORE</th>
-        </tr>
-        <tr className="ss-run-ab">
+    <div className="ss-run-wrap" style={{ width: `${RUN_TABLE_W}mm`, height: `${RUN_TABLE_H}mm` }}>
+      <table className="ss-run">
+        <colgroup>
           {Array.from({ length: RUN_BLOCKS }, (_, b) => (
             <Fragment key={b}>
-              <th colSpan={2}>A</th>
-              <th colSpan={2}>B</th>
+              <col style={{ width: `${RUN_W_WHO}mm` }} />
+              <col style={{ width: `${RUN_W_PT}mm` }} />
+              <col style={{ width: `${RUN_W_PT}mm` }} />
+              <col style={{ width: `${RUN_W_WHO}mm` }} />
             </Fragment>
           ))}
-        </tr>
-      </thead>
-      <tbody>
-        {Array.from({ length: RUN_ROWS }, (_, r) => (
-          <tr key={r}>
-            {Array.from({ length: RUN_BLOCKS }, (_, b) => {
-              const n = b * RUN_ROWS + r + 1;
-              const hm = home.get(n);
-              const am = away.get(n);
-              return (
-                <Fragment key={b}>
-                  <td className="c-who">{hm?.number ?? ''}</td>
-                  <td className="c-pt"><RunCell mark={hm} value={n} /></td>
-                  <td className="c-pt shade"><RunCell mark={am} value={n} /></td>
-                  <td className="c-who">{am?.number ?? ''}</td>
-                </Fragment>
-              );
-            })}
+        </colgroup>
+        <thead>
+          <tr className="ss-run-title">
+            <th colSpan={RUN_BLOCKS * 4}>ランニングスコア　RUNNING SCORE</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+          <tr className="ss-run-ab">
+            {Array.from({ length: RUN_BLOCKS }, (_, b) => (
+              <Fragment key={b}>
+                <th colSpan={2}>A</th>
+                <th colSpan={2}>B</th>
+              </Fragment>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: RUN_ROWS }, (_, r) => (
+            <tr key={r}>
+              {Array.from({ length: RUN_BLOCKS }, (_, b) => {
+                const n = b * RUN_ROWS + r + 1;
+                const hm = home.marks.get(n);
+                const am = away.marks.get(n);
+                const hEnd = hm?.quarterEnd ? (hm.gameEnd ? 'game-end' : 'q-end') : '';
+                const aEnd = am?.quarterEnd ? (am.gameEnd ? 'game-end' : 'q-end') : '';
+                return (
+                  <Fragment key={b}>
+                    <td className={`c-who ${hEnd}`}><RunWho mark={hm} /></td>
+                    <td className={`c-pt ${hEnd}`}><RunNumber mark={hm} value={n} /></td>
+                    <td className={`c-pt shade ${aEnd}`}><RunNumber mark={am} value={n} /></td>
+                    <td className={`c-who ${aEnd}`}><RunWho mark={am} /></td>
+                  </Fragment>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* ゲーム終了後、残りの欄に引く斜線（チームごと・ブロックごとに1本） */}
+      {finished && <svg
+        className="ss-run-tails"
+        viewBox={`0 0 ${RUN_TABLE_W} ${RUN_TABLE_H}`}
+        preserveAspectRatio="none"
+      >
+        {[{ side: 'home' as const, total: home.total }, { side: 'away' as const, total: away.total }].map(({ side, total }) =>
+          tailLines(total).map((l) => {
+            // チームAは外側＋数字の2列、チームBは数字＋外側の2列にかかる
+            const base = l.block * RUN_BLOCK_W + (side === 'home' ? 0 : RUN_W_WHO + RUN_W_PT);
+            return (
+              <line
+                key={`${side}-${l.block}`}
+                x1={base}
+                y1={l.y1}
+                x2={base + RUN_W_WHO + RUN_W_PT}
+                y2={l.y2}
+                stroke="#000"
+                strokeWidth="0.35"
+              />
+            );
+          }),
+        )}
+      </svg>}
+    </div>
   );
 }
 
@@ -161,13 +268,16 @@ export default function SheetPrint() {
   const awayPts = teamTotal(game.events, 'away').pts;
   const winner = homePts === awayPts ? '' : homePts > awayPts ? game.home.name : game.away.name;
   const [y, m, d] = game.date.split('-');
+  const hasOt = homeQ.length > game.quarterCount;
+  const otHome = homeQ.slice(game.quarterCount).reduce((a, b) => a + b, 0);
+  const otAway = awayQ.slice(game.quarterCount).reduce((a, b) => a + b, 0);
 
   return (
     <div className="sheet-page">
       <div className="sheet-toolbar">
         <Link className="btn tiny" to={`/game/${game.id}/box`}>← スタッツ</Link>
         <button className="btn tiny" onClick={() => window.print()}>印刷 / PDF保存</button>
-        <span className="hint">A4縦・1枚。ブラウザの印刷画面で「PDFに保存」を選べばPDFになります。</span>
+        <span className="hint">A4縦1枚。印刷画面で「背景のグラフィック」をオンにすると色と網掛けも出ます。</span>
       </div>
 
       <div className="sheet">
@@ -181,7 +291,7 @@ export default function SheetPrint() {
         <div className="ss-meta">
           <div className="ss-meta-row">
             <span className="f w-wide"><i>大会名 Competition</i><b>{game.title}</b></span>
-            <span className="f"><i>日付 Date</i><b>{y ? `${y} 年 ${Number(m)} 月 ${Number(d)} 日` : game.date}</b></span>
+            <span className="f"><i>日付 Date</i><b>{y ? `${y}年${Number(m)}月${Number(d)}日` : game.date}</b></span>
             <span className="f"><i>時間 Time</i><b /></span>
             <span className="f"><i>クルーチーフ Crew Chief</i><b /></span>
           </div>
@@ -207,19 +317,29 @@ export default function SheetPrint() {
           </div>
 
           <div className="ss-right">
-            <RunningScore game={game} />
+            <RunningScoreTable game={game} />
 
             <table className="ss-score">
               <tbody>
-                {homeQ.map((v, i) => (
-                  <tr key={i}>
-                    <td className="c-sc-label">{i < game.quarterCount ? `第${i + 1}クォーター Quarter ${i + 1}` : `オーバータイム Over time ${i - game.quarterCount + 1}`}</td>
-                    <td className="c-sc-ab">A</td>
-                    <td className="c-sc-v">{v}</td>
-                    <td className="c-sc-ab">B</td>
-                    <td className="c-sc-v">{awayQ[i]}</td>
-                  </tr>
-                ))}
+                {Array.from({ length: game.quarterCount }, (_, i) => {
+                  const pen = quarterPen(i + 1, game.quarterCount);
+                  return (
+                    <tr key={i}>
+                      <td className="c-sc-label">第{i + 1}クォーター Quarter {i + 1}</td>
+                      <td className="c-sc-ab">A</td>
+                      <td className={`c-sc-v ${pen}`}>{homeQ[i] ?? 0}</td>
+                      <td className="c-sc-ab">B</td>
+                      <td className={`c-sc-v ${pen}`}>{awayQ[i] ?? 0}</td>
+                    </tr>
+                  );
+                })}
+                <tr>
+                  <td className="c-sc-label">オーバータイム Over time</td>
+                  <td className="c-sc-ab">A</td>
+                  <td className="c-sc-v dark">{hasOt ? otHome : '／'}</td>
+                  <td className="c-sc-ab">B</td>
+                  <td className="c-sc-v dark">{hasOt ? otAway : '／'}</td>
+                </tr>
                 <tr className="ss-final">
                   <td className="c-sc-label">最終スコア Final Score</td>
                   <td className="c-sc-ab">A</td>
@@ -239,8 +359,11 @@ export default function SheetPrint() {
             </table>
 
             <p className="ss-note">
-              ※ このアプリで記録した内容のみ記入しています。ファウルの種類（P/T/U/GD）、タイムアウト、
-              審判名、ライセンスNo.、試合終了時間は空欄です。○囲みはフリースロー、太枠はそのクォーター最後の得点。
+              JBA TOマニュアル（2024年4月）の記入方法に準拠：第1Q・第3Qは赤、第2Q・第4Q・OTは黒。
+              フリースローは●、2点は斜線、3点は斜線＋番号を○。各Q最後の得点は太い○と横線、
+              最終得点は2本線。先発の Player in は✕に赤○、途中出場は✕のみ。<br />
+              このアプリで記録していない項目（ファウルの種類と本数、タイムアウト、審判・コーチ名、
+              ライセンスno.、試合終了時間、途中出場したクォーター）は空欄のままです。
             </p>
           </div>
         </div>
