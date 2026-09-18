@@ -102,6 +102,7 @@ export default function BoxScore() {
       <header className="app-header">
         <Link className="btn tiny" to="/">← 一覧</Link>
         <Link className="btn tiny" to={`/game/${game.id}/live`}>記録画面</Link>
+        <Link className="btn tiny" to={`/game/${game.id}/sheet`}>公式形式</Link>
         <button className="btn tiny" onClick={() => void downloadScoreSheet(game)}>スコアシート(Excel)</button>
         <button className="btn tiny" onClick={() => downloadCsv(game)}>CSV出力</button>
         <button className="btn tiny" onClick={() => window.print()}>印刷</button>
